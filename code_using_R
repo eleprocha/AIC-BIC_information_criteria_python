@@ -1,0 +1,131 @@
+library(psych)
+library(car)
+library(lmtest)
+library(TSA)
+library(MASS)
+library("ggplot2")
+library("MESS")
+library(gcookbook)
+library("MAP")
+library("ModelMap")
+library(rethinking)
+sppnames <- c( "afarensis","africanus","habilis","boisei","rudolfensis","ergaster","sapiens")
+brainvolcc <- c( 438 , 452 , 612, 521, 752, 871, 1350 )
+masskg <- c( 37.0 , 35.5 , 34.5 , 41.5 , 55.5 , 61.0 , 53.5 )
+d <- data.frame( species=sppnames , brain=brainvolcc , mass=masskg )
+#___________________________________________________________________________________
+#                            model1: brain = a +b*mass
+#___________________________________________________________________________________
+m6.1<-lm(brain~mass,data=d)
+m6.1
+#brain=-227.63+20.69*mass
+#_______________R^2=0.49____________________________________________________________
+1 - var(resid(m6.1))/var(d$brain)
+#___________________________________________________________________________________
+#                           model2:brain=a+b1*mass+b2*mass
+#___________________________________________________________________________________
+m6.2<-lm(brain~mass+I(mass^2),data=d)
+m6.2
+#brain=-2618.137+127.306*mass-1.33*mass^2 
+#______________R^2=0.53_____________________________________________________________
+1 - var(resid(m6.2))/var(d$brain)
+#___________________________________________________________________________________
+plot( brain ~ mass , d , col="slateblue" )
+for ( i in 1:nrow(d) ) {
+  d.new <- d[ -i , ]
+  m0 <- lm( brain ~ mass, d.new )
+  abline( m0 , col=col.alpha("black",0.5) )
+}
+
+# Create a data frame with mass column, interpolating across range
+xmin <- min(d$mass)
+xmax <- max(d$mass)
+predicted <- data.frame(mass=seq(xmin, xmax, length.out=100))
+# Calculate predicted values of brain
+predicted$brain <- predict(m6.2, predicted)
+predicted
+sp <- ggplot(d, aes(x=mass, y=brain)) +
+  geom_point(colour="grey40")
+sp + geom_line(data=predicted, size=1)
+#___________________________________________________________________________________
+#                     model3: brain =a +b1*mass +b2*mass^2 +b3*mass^3
+#___________________________________________________________________________________
+m6.3<-lm(brain~mass+I(mass^2)+I(mass^3),data=d)
+m6.3
+xmin <- min(d$mass)
+xmax <- max(d$mass)
+predicted <- data.frame(mass=seq(xmin, xmax, length.out=100))
+# Calculate predicted values of brain
+predicted$brain <- predict(m6.3, predicted)
+predicted
+sp <- ggplot(d, aes(x=mass, y=brain)) +
+  geom_point(colour="grey40")
+sp + geom_line(data=predicted, size=1)
+#___________________________________________________________________________________
+#                    model4: brain =a +b1*mass +b2*mass^2 +b3*mass^3+b4mass^4
+#___________________________________________________________________________________
+m6.4<-lm(brain~mass+I(mass^2)+I(mass^3)+I(mass^4),data=d)
+m6.4
+xmin <- min(d$mass)
+xmax <- max(d$mass)
+predicted <- data.frame(mass=seq(xmin, xmax, length.out=100))
+# Calculate predicted values of brain
+predicted$brain <- predict(m6.4, predicted)
+predicted
+sp <- ggplot(d, aes(x=mass, y=brain)) +
+  geom_point(colour="grey40")
+sp + geom_line(data=predicted, size=1)
+#___________________________________________________________________________________
+#                    model5: brain =a +b1*mass +b2*mass^2 +b3*mass^3+b4mass^4+b5*mass^5
+#___________________________________________________________________________________
+m6.5<-lm(brain~mass+I(mass^2)+I(mass^3)+I(mass^4)+I(mass^5),data=d)
+m6.5
+xmin <- min(d$mass)
+xmax <- max(d$mass)
+predicted <- data.frame(mass=seq(xmin, xmax, length.out=100))
+
+
+# Calculate predicted values of brain
+predicted$brain <- predict(m6.5, predicted)
+predicted
+sp <- ggplot(d, aes(x=mass, y=brain)) +
+  geom_point(colour="grey40")
+sp + geom_line(data=predicted, size=1)
+#____________________________________________________________________________
+# compute deviance by cheating
+(-2) * logLik(m6.1)
+#standardize the mass before fitting
+install.packages(c('devtools','coda','mvtnorm'))
+library(devtools)
+
+d$mass.s <- (d$mass-mean(d$mass))/sd(d$mass)
+m6.8 <- Map(alist( brain ~ dnorm( mu , sigma ) ,mu <- a + b*mass.s) ,data=d ,
+start=list(a=mean(d$brain),b=0,sigma=sd(d$brain)),method="Nelder-Mead" )
+# extract MAP estimates
+theta <- coef(m6.8)
+# compute deviance
+dev <- (-2)*sum( dnorm(
+  d$brain ,
+  mean=theta[1]+theta[2]*d$mass.s ,
+  sd=theta[3] ,
+  log=TRUE ) )
+dev
+
+install.packages(c('coda','mvtnorm'))
+options(repos=c(getOption('repos'),rethinking='http://xcelab.net/R'))
+install.packages('rethinking',type='source')
+
+library(rethinking)
+
+help(package=rethinking)
+
+pkgbuild::has_build_tools(debug = TRUE)
+library("rstan")
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+Sys.setenv(LOCAL_CPPFLAGS = '-march=native')
+
+install.packages(c('devtools','coda','mvtnorm'))
+library(devtools)
+
+
