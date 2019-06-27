@@ -1,0 +1,79 @@
+echo "# AIC-BIC_information_criteria_python" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/eleprocha/AIC-BIC_information_criteria_python.git
+git push -u origin master
+
+#python_code 
+#import libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplot inline
+#Data
+df=pd.DataFrame({'sppnames':["afarensis","africanus","habilis","boisei","rudolfensis","ergaster","sapiens"],'brainvolcc'
+:[438 , 452 , 612, 521, 752, 871, 1350 ],'msskg':[37 , 35.5 , 34.5 , 41.5 , 55.5 , 61.0 , 53.5]})
+
+#correlation_matrix
+df.corr()
+
+#linear regression_scatter_plot
+plt.scatter(x=df['brainvolcc'],y=df['msskg'],cmap='gist_rainbow')
+plt.show()
+
+#linear_correlation_no1_from_scratch
+xmean=np.mean(df['brainvolcc'])
+ymean=np.mean(df['msskg'])
+df['beta']=(df['brainvolcc']-xmean)*(df['msskg']-
+ymean)
+df['xvar']=(df['brainvolcc']-xmean)**2
+betan=df.sum()['beta']
+betad=df.sum()['xvar']
+beta=betan/betad
+alpha=ymean-(betan/betad)*xmean
+beta,alpha
+#output: y=0.02+28.6*x, x=brain_size, y=msskg
+
+
+#linear_regression_no2_from statsmodels.formula
+import statsmodels.formula.api as smf
+
+model1=smf.ols(formula='brainvolcc~msskg',data=df).fit()
+model1.params
+model1.summary()
+
+#save_output_dataframe_as_png
+fig=df
+from pandas.tools.plotting import table
+ax = plt.subplot(111, frame_on=False)
+ax.xaxis.set_visible(False)
+ax.yaxis.set_visible(False)
+table(ax, fig) # where fig is your data frame
+plt.savefig('mytable.png')
+
+#we proceed with non linear regression and try to fit our data on polynomial models with degrees 2,3,4 or 5
+
+#polynomial_degree=2
+x=df['msskg']
+y=df['brainvolcc']
+weights = np.polyfit(x, y, deg=2)
+model2 = np.poly1d(weights)
+results = smf.ols(formula='y~ model2(x)', data=df).fit()
+
+#polynomial_degree=3
+weights = np.polyfit(x, y, deg=3)
+model3 = np.poly1d(weights)
+results = smf.ols(formula='y~ model3(x)', data=df).fit()
+results.summary()
+
+#polynomial_degree=5
+import statsmodels.formula.api as smf
+weights = np.polyfit(x, y, deg=5)
+model5 = np.poly1d(weights)
+results = smf.ols(formula='y~ model5(x)', data=df).fit()
+results.summary()
+
+
+
