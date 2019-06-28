@@ -20,21 +20,22 @@ df=pd.DataFrame({'sppnames':["afarensis","africanus","habilis","boisei","rudolfe
 df.corr()
 
 #linear regression_scatter_plot
-plt.scatter(x=df['brainvolcc'],y=df['msskg'],cmap='gist_rainbow')
+
+plt.scatter(x=df['msskg'],y=df['brainvolcc'],cmap='gist_rainbow')
 plt.show()
 
 #linear_correlation_no1_from_scratch
-xmean=np.mean(df['brainvolcc'])
-ymean=np.mean(df['msskg'])
-df['beta']=(df['brainvolcc']-xmean)*(df['msskg']-
+xmean=np.mean(df['msskg'])
+ymean=np.mean(df['brainvolcc'])
+df['beta']=(df['msskg']-xmean)*(df['brainvolcc']-
 ymean)
-df['xvar']=(df['brainvolcc']-xmean)**2
+df['xvar']=(df['msskg']-xmean)**2
 betan=df.sum()['beta']
 betad=df.sum()['xvar']
 beta=betan/betad
 alpha=ymean-(betan/betad)*xmean
 beta,alpha
-#output: y=0.02+28.6*x, x=brain_size, y=msskg
+#output:y=-227.62+20.68*x, y=brain_size, x=msskg
 
 
 #linear_regression_no2_from statsmodels.formula
@@ -75,5 +76,19 @@ model5 = np.poly1d(weights)
 results = smf.ols(formula='y~ model5(x)', data=df).fit()
 results.summary()
 
+#polynomial_fit_inmatplotlib
+X=x.as_matrix(columns=None)
+Y=y.as_matrix(columns=None)
+
+import plotly.plotly as py
+import plotly.graph_objs as go
+
+import matplotlib.pyplot as plt
+from matplotlib import pylab
+
+x_new = np.linspace(X[0], X[-1], 50)
+y_new = model5(x_new)
+
+plt.plot(x,y,'o', x_new, y_new)
 
 
